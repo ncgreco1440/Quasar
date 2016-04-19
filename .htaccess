@@ -1,0 +1,6 @@
+RewriteEngine On    # Turn on the rewriting engine
+#RewriteRule    ^example/?$    example.php    [NC,L] #example redirect
+RewriteCond     %{REQUEST_URI} !^([^\.]+)?/url(/|$)
+RewriteRule     ^([^\.]+)$ $1.php [NC,L] #redirect anything to anything.php (excluding admin, as per the line above)
+
+RewriteRule     ^url/([^\.]+)$ /url/index.php?shorturl=$1 [NC,L] #url shortener
