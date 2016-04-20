@@ -20,9 +20,9 @@ class Connection
     public static function connect()
     {
         $db = Env\Env::fetchEnv();
-        $_connection = new \mysqli($db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD'], $db['DB_DATABASE'])
+        $_connection = new \mysqli($db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD'], $db['DB_DATABASE']);
         if($_connection->connect_erno > 0)
-            echo "Connection Error! ". $_connection->connect_erno ."<br/>";
+            echo "Connection Error! ";//. $_connection->connect_erno ."<br/>";
         else
             echo "Database Obtained A Successful Connection!<br/>";
     }
