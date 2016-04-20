@@ -29,7 +29,7 @@
 spl_autoload_register(null, false);
 
 /*** specify extensions that may be loaded ***/
-spl_autoload_extensions('.php, .class.php, lib.php');
+spl_autoload_extensions('.php, .class.php, lib.php, contrl.php');
 
 /*** slice namespaces ***/
 function rmNamespace($name)
@@ -62,8 +62,19 @@ function libLoader($library)
     include $file;
 }
 
+/*** library Loader ***/
+function contrlLoader($contrl)
+{
+    $filename = strtolower(rmNamespace($contrl)) . '.contrl.php';
+    $file = __DIR__ . "/controllers/". $filename;
+    if (!file_exists($file))
+        return false;
+    include $file;
+}
+
 spl_autoload_register('classLoader');
 spl_autoload_register('libLoader');
+spl_autoload_register('contrlLoader');
 
 /*** Immediately establish a connection to the database ***/
 use Database;

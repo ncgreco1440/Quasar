@@ -11,10 +11,16 @@
         <meta name="language" content="English">
         <meta name="reply-to" content="nico@nicogreco.com">
         <meta name="web_author" content="Nico Greco nicogreco.com">
-        <title>Tech|Nico - <?php echo $route; ?></title>
+        <title>Tech|Nico - <?php echo $page; ?></title>
         <link rel="icon" href="//tech.nicogreco.local/favicon.ico" type="image/x-icon" />
     </head>
     <body>
         <header>
-            <nav><a href="/">Home</a><a href="about">About</a></nav>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="about">About</a></li>
+                    <li><a href="contact">Contact</a></li>
+                </ul>
+            </nav>
         </header>
