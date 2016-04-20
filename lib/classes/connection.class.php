@@ -1,5 +1,8 @@
 <?php 
 namespace Database;
+
+use Application\Env;
+Env\Env::createEnviornment();
 /** ====================================================================================
 
     1. 
@@ -14,9 +17,10 @@ class Connection
 {
     private static $_connection = false;
 
-    public static function connect($h, $n, $u, $p) 
+    public static function connect() 
     {
-        if(!$_connection = new \mysqli($h, $u, $p, $n))
+        $db = Env\Env::fetchEnv();
+        if(!$_connection = new \mysqli($db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD'], $db['DB_DATABASE']))
             echo "Connection Error!<br/>";
         else
             echo "Database Obtained A Successful Connection!<br/>";
