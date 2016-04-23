@@ -2,6 +2,11 @@
 namespace Quasar;
 class Kernel
 {
+    public static function getQuery()
+    {
+        return $_SERVER['QUERY_STRING'];
+    }
+
     public static function getRequest()
     {
         return $_SERVER['REQUEST_URI'];
@@ -30,5 +35,10 @@ class Kernel
     public static function getMethod()
     {
         return $_SERVER['REQUEST_METHOD'];
+    }
+
+    public static function getPost()
+    {
+        return $_POST;
     }
 }

@@ -39,6 +39,8 @@ class Env
             self::$_env[trim($piece[0])] = trim($piece[1]);
         }
         fclose($file);
+
+        date_default_timezone_set(self::$_env['APP_LOCATION']);
     }
 
     private static function setErrorReporting()

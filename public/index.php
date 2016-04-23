@@ -2,18 +2,26 @@
 /*** AUTOLOAD ***/
 require "../lib/autoload.php";
 
-use Functions\Functions;
+use Routes\Routes;
 
-$preView = Functions::prepareView();
+$route = Routes::getRoute();
 
-$page = new Page;
+$this_page = new Page;
 
-$view = $page->$preView();
-extract($view);             // split up the bundled array into $file and $content
-extract($content);          // split up $content into n many variables this view needs
+$view = $this_page->$route();
 
-$copyright = Functions::yieldCopyright();
+extract($view);
+extract($content);
+
+print_r($user);
 
 /*** VIEWS ***/
-require "../resources/views/app.page.php";
+if($query == "signin")
+    require "../resources/views/admin/signin.page.php";
+else if($query == "forgot-password")
+    require "../resources/views/admin/forgot-password.page.php";
+else
+    require "../resources/views/app.page.php";
+
+
 
