@@ -88,7 +88,7 @@ class Page
 
         $page = "Quasar | Users";
         $text = "This is the users page...";
-        $users = [["username" => "admin"], ["username" => "ncgreco"], ["username" => "jgonzalez"]];
+        $users = self::getUsers();
         return ["file" => "admin/users", "query" => $query, "content" => compact("page", "text",
             "user", "users")];
     }
@@ -155,7 +155,15 @@ class Page
         if($token = Validate::validateToken())
             return Users::getUser($username);
         else
-           return false;
+           return [];
+    }
+
+    private function getUsers()
+    {
+        if($token = Validate::validateToken())
+            return Users::getUsers();
+        else
+            return [];
     }
 
     /**
@@ -166,10 +174,6 @@ class Page
      */
     private function analyzePost()
     {
-        if(isset($_REQUEST['passwordReset']))
-            return Authenticate::resetPass($_POST['email']);
-        //if(isset($_REQUEST['login']))
-            //return Authenticate::logIn($_POST['username'], $_POST['password'], "/admin/home");
         if(isset($_REQUEST['logout']))
             Authenticate::logOut();
         if(isset($_REQUEST['contact'])) {}

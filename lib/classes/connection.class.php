@@ -84,27 +84,63 @@ class Connection
      */
     public static function decryptAndShow($data)
     {
-        $i = 1;
-        $query = self::assembleQuery_SELECT($data['select']);
+        // SELECT
+        $query = "SELECT ";
+        $query .= self::assembleQuery_SELECT_ENCRYPTED($data['select']);
+        $query .= self::assembleQuery_SELECT_UNENCRYPTED($data['select']);
+        // FROM
         $query .= self::assembleQuery_FROM($data['from']);
+        // WHERE
+        if(isset($data['where']))
+            $query .= self::assembleQuery_WHERE($data['where']);
+        // ORDER BY
+        if(isset($data['orderby']))
+            $query .= self::assembleQuery_ORDERBY($data['orderby']);
+        // LIMIT
+        if(isset($data['limit']))
+            $query .= self::assembleQuery_LIMIT($data['limit']);
         $data = self::executeQuery($query);
-        return $data->fetch_assoc();
+        $data = self::fetchAssoc($data);
+        if(count($data))
+            return $data;
+        else
+            return [];
     }
 
 /* =================================================================================================
         PRIVATE METHODS
 ================================================================================================= */
 
-    private static function assembleQuery_SELECT($data)
+    private static function assembleQuery_SELECT_ENCRYPTED($data)
     {
-        $select = "SELECT ";
-        foreach($data as $key => $value)
+        $select = "";
+        $i = 1;
+        foreach($data['encrypted'] as $key => $value)
         {
-            $query .= "AES_DECRYPT(`$value`, 'Grasshopper') as `$value`";
-            if($i != count($data))
-                $query .= ", ";
+            $select .= "AES_DECRYPT(`$value`, 'Grasshopper') as `$value`";
+            if($i != count($data['encrypted']))
+                $select .= ", ";
             else
-                $query .= " ";
+                if(count($data['unencrypted']))
+                    $select .= ", ";
+                else
+                    $select .= " ";
+            $i++;
+        }
+        return $select;
+    }
+
+    private static function assembleQuery_SELECT_UNENCRYPTED($data)
+    {
+        $select = "";
+        $i = 1;
+        foreach($data['unencrypted'] as $key => $value)
+        {
+            $select .= "`$value`";
+            if($i != count($data['unencrypted']))
+                $select .= ", ";
+            else
+                $select .= " ";
             $i++;
         }
         return $select;
@@ -112,7 +148,26 @@ class Connection
 
     private static function assembleQuery_FROM($data)
     {
-        $from = "FROM `$data` ";
+        return "FROM `$data` ";
+    }
+
+    private static function assembleQuery_WHERE($data)
+    {
+        $i = 1;
+        $where = "WHERE ";
+        foreach($data as $key => $value)
+        {
+            $where .= "AES_DECRYPT(`$key`, 'Grasshopper') = '$value'";
+            if($i != count($data))
+                $where .= "AND ";
+            $i++;
+        }
+        return $where;
+    }
+
+    private static function fetchAssoc($data)
+    {
+        return $data->fetch_assoc();
     }
 }
 

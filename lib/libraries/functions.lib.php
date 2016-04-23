@@ -10,12 +10,29 @@ class Functions
         echo "Hello, World!<br/>";
     }
 
-    public static function genForm($name, $method, $action, $fields)
+    /**
+     * [genForm]
+     *
+     * Generates a form, the form can be blank upon load or it can prepopulated assuming that
+     * the provided prepopulate array contains keys that match up with the keys in the $fields
+     * argument.
+     *
+     * @param  [string]  $name          [name of the form]
+     * @param  [string]  $method        [method, usually a POST]
+     * @param  [string]  $action        [where to post to]
+     * @param  [array]   $fields        [array of all inputs and their names]
+     * @param  [mixed]   $prepopulate   [optional, will auto populate every input]
+     * @return [string]                 [HTML form]
+     */
+    public static function genForm($name, $method, $action, $fields, $prepopulate = false)
     {
         $formStr = "<form name=\"$name\" method=\"$method\" action=\"$action\">";
         foreach($fields as $k => $v)
         {
-            $input = self::analyzeFormField($k, $v);
+            $default = "";
+            if(isset($prepopulate[$k]))
+                $default = $prepopulate[$k];
+            $input = self::analyzeFormField($k, $v, $default);
             $formStr .= "<label for=\"$k\">$k</label>";
             $formStr .= $input;
         }
@@ -43,11 +60,11 @@ class Functions
             </div>";
     }
 
-    private static function analyzeFormField($name, $type)
+    private static function analyzeFormField($name, $type, $default)
     {
         $input = "";
         if($type == "text" || $type == "password" || $type == "email")
-            $input = "<input type=\"$type\" name=\"$name\" value=\"\" required />";
+            $input = "<input type=\"$type\" name=\"$name\" value=\"$default\" required />";
         else if($type == "textarea")
             $input = "<textarea name=\"$name\" required></textarea>";
         else

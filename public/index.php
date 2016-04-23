@@ -13,8 +13,6 @@ $view = $this_page->$route();
 extract($view);
 extract($content);
 
-print_r($user);
-
 /*** VIEWS ***/
 if($query == "signin")
     require "../resources/views/admin/signin.page.php";
