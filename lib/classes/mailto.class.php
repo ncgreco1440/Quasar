@@ -1,27 +1,36 @@
 <?php
 namespace Mail;
+
+use Vendor\PHPMailer;
+
 class MailTo
 {
     public static function htmlEmail($to, $subject, $message, $from, $fromname)
     {
-        $headers = "From: $fromname <$from>\r\n";
-        $headers .= "MIME-Version: 1.0\r\n";
-        $boundary = uniqid("HTMLEMAIL");
-        $headers .= "Content-Type: multipart/alternative;".
-                    "boundary = $boundary\r\n";
-        $headers .= "This is a MIME encoded message.\r\n";
-        $headers .= "--$boundary\r\n".
-                    "Content-Type: text/plain; charset=ISO-8859-1\r\n".
-                    "Content-Transfer-Encoding: base64\r\n";
-        $headers .= chunk_split(base64_encode(strip_tags($message)));
-        $headers .= "--$boundary\r\n".
-                    "Content-Type: text/html; charset=ISO-8859-1\r\n".
-                    "Content-Transfer-Encoding: base64\r\n";
-        $headers .= chunk_split(base64_encode($message));
+        //Create a new PHPMailer instance
+        $mail = new PHPMailer;
+        //Set who the message is to be sent from
+        $mail->setFrom("support@quasar.cms", "Quasar Support");
+        //Set an alternative reply-to address
+        $mail->addReplyTo("noreply@quasar.cms", "No Reply");
+        //Set who the message is to be sent to
+        $mail->addAddress($to);
+        //Set the subject line
+        $mail->Subject = $subject;
+        //Read an HTML message body from an external file, convert referenced images to embedded,
+        //convert HTML into a basic plain-text alternative body
+        $mail->msgHTML($message);
+        //Replace the plain text body with one created manually
+        $mail->AltBody = 'This is a plain-text message body';
+        //Attach an image file
+        //$mail->addAttachment('images/phpmailer_mini.png');
 
-        $sendmail = mail($to,$subject,"",$headers);
-
-        return $sendmail;
+        //send the message, check for errors
+        if (!$mail->send()) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public static function passwordResetMsg($addresse, $password)

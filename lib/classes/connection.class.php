@@ -66,7 +66,7 @@ class Connection
                 $query .= " ";
             $i++;
         }
-        //$query .= "WHERE `token` = '$token'";
+        $query .= "WHERE `token` = '$data[token]'";
         if(self::executeQuery($query))
             return true;
         else

@@ -72,9 +72,20 @@ function contrlLoader($contrl)
     include $file;
 }
 
+/*** vendor loader ***/
+function vendorLoader($vend)
+{
+    $filename = strtolower(rmNamespace($vend)) . '.class.php';
+    $file = __DIR__ . "/vendors/". $filename;
+    if (!file_exists($file))
+        return false;
+    include $file;
+}
+
 spl_autoload_register('classLoader');
 spl_autoload_register('libLoader');
 spl_autoload_register('contrlLoader');
+spl_autoload_register('vendorLoader');
 
 /*** Immediately establish a connection to the database ***/
 use Database;

@@ -13,24 +13,44 @@ use Quasar\Users;
 
 class Page
 {
+    private $public_pages =
+    [
+        "home",
+        "about",
+        "contact"
+    ];
+
+    private $admin_pages =
+    [
+        "admin_home",
+        "admin_users",
+        "admin_pages",
+        "admin_help"
+    ];
+
+
+    public function __call($method, $args)
+    {
+        return $this->$method();
+    }
 /* =================================================================================================
         PUBLIC PAGES
 ================================================================================================= */
-    public function home()
+    private function home()
     {
         $query = Kernel::getQuery() != "" ? Kernel::getQuery() : false;
         $page = "Home";
         return ["file" => "pages/home", "query" => $query,  "content" => compact("page")];
     }
 
-    public function about()
+    private function about()
     {
         $query = Kernel::getQuery() != "" ? Kernel::getQuery() : false;
         $page = "About";
         return ["file" => "pages/about", "query" => $query, "content" => compact("page")];
     }
 
-    public function contact()
+    private function contact()
     {
         $query = Kernel::getQuery() != "" ? Kernel::getQuery() : false;
         $page = "Contact";
@@ -40,7 +60,7 @@ class Page
 /* =================================================================================================
         PRIVATE PAGES
 ================================================================================================= */
-    public function admin_home()
+    private function admin_home()
     {
         $query = Kernel::getQuery() != "" ? Kernel::getQuery() : false;
         switch($query)
@@ -64,7 +84,7 @@ class Page
         return ["file" => "admin/home", "query" => $query, "content" => compact("page", "message")];
     }
 
-    public function admin_pages()
+    private function admin_pages()
     {
         Authenticate::loggedIn();
         $message = self::analyzePost();
@@ -75,7 +95,7 @@ class Page
         return ["file" => "admin/pages", "query" => $query, "content" => compact("page")];
     }
 
-    public function admin_users()
+    private function admin_users()
     {
         Authenticate::loggedIn();
         $message = self::analyzePost();
@@ -90,10 +110,10 @@ class Page
         $text = "This is the users page...";
         $users = self::getUsers();
         return ["file" => "admin/users", "query" => $query, "content" => compact("page", "text",
-            "user", "users")];
+            "user", "users", "message")];
     }
 
-    public function admin_help()
+    private function admin_help()
     {
         Authenticate::loggedIn();
         $message = self::analyzePost();
@@ -178,5 +198,16 @@ class Page
             Authenticate::logOut();
         if(isset($_REQUEST['contact'])) {}
             //return Mail::mailTo();
+        if(isset($_REQUEST['chngPassword']))
+        {
+            if($_POST['newPass'] == $_POST['confPass'])
+                return Authenticate::changePass($_POST['currPass'], $_POST['newPass']);
+            else
+                return ['success' => false, 'message' => "New and Confirm Passwords must match."];
+        }
+        if(isset($_REQUEST['userForm']))
+        {
+            return Users\Profile::saveProfile($_POST['firstname'], $_POST['lastname'], $_POST['email']);
+        }
     }
 }

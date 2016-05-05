@@ -148,6 +148,33 @@ class Authenticate
                 address."];
     }
 
+
+    public static function changePass($oldPassword, $newPassword)
+    {
+        $conn = Connection::getConnection();
+
+        if($token = Validate::validateToken())
+        {
+            $cleanVals = Connection::mysqlClean(compact('oldPassword', 'newPassword'));
+            $query = "SELECT `password` FROM `LEV_users` WHERE `token` = '$token'";
+            $userPass = $conn->query($query);
+            $userPass = $userPass->fetch_assoc();
+            if(self::confirmPassword($cleanVals['oldPassword'], $userPass['password']))
+            {
+                $newHash = password_hash($cleanVals['newPassword'], CRYPT_BLOWFISH);
+                $updatePass = $conn->prepare("UPDATE `LEV_users` SET `password` = ?");
+                $updatePass->bind_param('s', $newHash);
+                if($updatePass->execute())
+                    return ["success" => true, "message" => "Password successfully updated"];
+                else
+                    return ["success" => false, "message" => "Failed to execute password change."];
+            }
+            else
+                return ["success" => false, "message" => "Invalid Password"];
+        }
+        return ["success" => false, "message" => "Invalid Token"];
+    }
+
 /* =================================================================================================
         PRIVATE METHODS
 ================================================================================================= */

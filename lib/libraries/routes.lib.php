@@ -43,6 +43,10 @@ class Routes
             case "/admin/help": {
                 return "admin_help";
             }
+            default: {
+                // Went to invalid route, send to home page
+                header("Location: /");
+            }
         }
     }
 
