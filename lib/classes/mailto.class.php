@@ -1,11 +1,11 @@
 <?php
 namespace Mail;
 
-use Vendor\PHPMailer;
+use Vendor\PHPMailer\PHPMailer;
 
 class MailTo
 {
-    public static function htmlEmail($to, $subject, $message, $from, $fromname)
+    public static function sendEmail($to, $subject, $message, $from, $fromname)
     {
         //Create a new PHPMailer instance
         $mail = new PHPMailer;

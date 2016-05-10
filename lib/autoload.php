@@ -24,6 +24,11 @@
 
 ====================================================================================*/
 
+$vendors =
+[
+    "PHPMailer"
+];
+
 
 /*** nullify any existing autoloads ***/
 spl_autoload_register(null, false);
@@ -39,6 +44,18 @@ function rmNamespace($name)
         return rmNamespace($name);
     }else{
         return $name;
+    }
+}
+
+/*** slice namespaces ***/
+function rmNamespace_dir($name)
+{
+    if(substr_count($name, "\\") >= 2) {
+        $name = substr($name, strpos($name, "\\") + 1);
+        return rmNamespace_dir($name);
+    }else{
+        $result = explode("\\", $name);
+        return ['dir' => $result[0], 'file' => strtolower($result[1])];
     }
 }
 
@@ -75,8 +92,8 @@ function contrlLoader($contrl)
 /*** vendor loader ***/
 function vendorLoader($vend)
 {
-    $filename = strtolower(rmNamespace($vend)) . '.class.php';
-    $file = __DIR__ . "/vendors/". $filename;
+    $filename = rmNamespace_dir($vend);
+    $file = __DIR__ . "/vendors/". $filename['dir'] . "/" . $filename['file'] . ".class.php";
     if (!file_exists($file))
         return false;
     include $file;

@@ -133,11 +133,12 @@ class Authenticate
             if(!$newPassword)
                 return ["success" => false, "message" => "Your password could not be reset due to a
                     connection error."];
-            // generate message
-            $message = MailTo::passwordResetMsg($fetched_username, $newPassword);
             // email new info
-            if(MailTo::htmlEmail($fetched_email, "Your Quasar CMS password has been reset.",
-                $message, "noreply@quasar.cms", "Quasar Support"))
+            if(MailTo::sendEmail(   $fetched_email,
+                                    "Your Quasar CMS password has been reset.",
+                                    MailTo::passwordResetMsg($fetched_username, $newPassword),
+                                    "noreply@quasar.cms",
+                                    "Quasar Support"))
                 return ["success" => true, "message" => "Your password has been sent to $email."];
             else
                 return ["success" => false, "message" => "There was an error. Your password
@@ -156,16 +157,27 @@ class Authenticate
         if($token = Validate::validateToken())
         {
             $cleanVals = Connection::mysqlClean(compact('oldPassword', 'newPassword'));
-            $query = "SELECT `password` FROM `LEV_users` WHERE `token` = '$token'";
-            $userPass = $conn->query($query);
-            $userPass = $userPass->fetch_assoc();
-            if(self::confirmPassword($cleanVals['oldPassword'], $userPass['password']))
+            $query = "SELECT AES_DECRYPT(`username`, 'Grasshopper') as `username`,
+                            AES_DECRYPT(`email`, 'Grasshopper') as `email`, `password`
+                        FROM `LEV_users`
+                        WHERE `token` = '$token'";
+            $user = $conn->query($query);
+            $user = $user->fetch_assoc();
+            if(self::confirmPassword($cleanVals['oldPassword'], $user['password']))
             {
                 $newHash = password_hash($cleanVals['newPassword'], CRYPT_BLOWFISH);
                 $updatePass = $conn->prepare("UPDATE `LEV_users` SET `password` = ?");
                 $updatePass->bind_param('s', $newHash);
                 if($updatePass->execute())
+                {
+                    // Send Mail!
+                    MailTo::sendEmail(  $user['email'],
+                                        "Your Quasar CMS password has been changed.",
+                                        MailTo::passwordChangeMsg($user['username']),
+                                        "noreply@quasar.cms",
+                                        "Quasar Support");
                     return ["success" => true, "message" => "Password successfully updated"];
+                }
                 else
                     return ["success" => false, "message" => "Failed to execute password change."];
             }
