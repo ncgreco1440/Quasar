@@ -9,15 +9,14 @@ class Users
         $select = ["encrypted" => ["username", "email", "lastname", "firstname"],
                     "unencrypted" => ["permissionID", "active", "lastsignin"]];
         $from = "LEV_users";
-        $where = ["username" => $name];
+        $where = ["encrypted" => ["username" => $name]];
         return Connection::decryptAndShow(compact("select", "from",
             "where"));
     }
 
     public static function getUsers()
     {
-        $select = ["encrypted" => ["username"],
-                    "unencrypted" => []];
+        $select = ["encrypted" => ["username"]];
         $from = "LEV_users";
         return Connection::decryptAndShow(compact("select", "from"));
     }

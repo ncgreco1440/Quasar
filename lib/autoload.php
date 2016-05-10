@@ -24,12 +24,6 @@
 
 ====================================================================================*/
 
-$vendors =
-[
-    "PHPMailer"
-];
-
-
 /*** nullify any existing autoloads ***/
 spl_autoload_register(null, false);
 

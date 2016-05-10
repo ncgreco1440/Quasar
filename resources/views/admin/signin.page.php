@@ -7,8 +7,11 @@
 <?php
     if($message)
         echo Functions::displayFormMsg($message);
-    echo Functions::genForm("login", "POST", "/admin/home?signin", ["username" => "text",
-    "password" => "password"]);
+    echo Functions::genForm(    "login",
+                                "POST",
+                                "/admin/home?signin",
+                                ["username" => ["label" => "Username", "type" => "text"],
+                                    "password" => ["label" => "Password", "type" => "password"]]);
 ?>
 <div class="form-row">
     <a  href="/admin/home?forgot-password" class="button">Forgot Password</a>

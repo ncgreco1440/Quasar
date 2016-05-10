@@ -6,7 +6,10 @@
 <?php
 use Functions\Functions;
 
-echo Functions::genForm("passwordReset", "POST", "/admin/home?signin", ["email" => "email"]);
+echo Functions::genForm(    "passwordReset",
+                            "POST",
+                            "/admin/home?signin",
+                            ["email" => ["label" => "Email", "type" => "email"]]);
 ?>
 <div class="form-row">
     <a  href="/admin/home?signin" class="button">Sign In</a>

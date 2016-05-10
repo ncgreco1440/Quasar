@@ -390,4 +390,30 @@ class Validate
         //echo "Cookie not set <br/>";
         return false;
     }
+
+    /**
+     * [validateAuth]
+     *
+     * Validates the user's authority level, this is executed before most admin level
+     * functions to confirm if the user has the authority to execute such a function.
+     *
+     * @param  [int]requiredAuth [The authority level required to execute the function]
+     * @return [bool] [returns true or false depending on the user's authority level]
+     */
+    public static function validateAuth($requiedAuth)
+    {
+        if($token = self::validateToken())
+        {
+            $select = ["unencrypted" => ["permissionID"]];
+            $from = "LEV_users";
+            $where = ["token" => $token];
+            $result = Connection::decryptAndShow(compact("select", "from", "where"));
+            if($result['permissionID'] >= $requiedAuth)
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
+    }
 }

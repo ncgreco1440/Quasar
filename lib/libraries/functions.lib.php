@@ -32,8 +32,8 @@ class Functions
             $default = "";
             if(isset($prepopulate[$k]))
                 $default = $prepopulate[$k];
-            $input = self::analyzeFormField($k, $v, $default);
-            $formStr .= "<label for=\"$k\">$k</label>";
+            $input = self::analyzeFormField($k, $v['type'], $default);
+            $formStr .= "<label for=\"$k\">$v[label]</label>";
             $formStr .= $input;
         }
         $formStr .= "<input class=\"button\" name=\"$name\""."Submit"." type=\"submit\"

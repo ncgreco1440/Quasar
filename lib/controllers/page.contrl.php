@@ -207,7 +207,15 @@ class Page
         }
         if(isset($_REQUEST['userForm']))
         {
-            return Users\Profile::saveProfile($_POST['firstname'], $_POST['lastname'], $_POST['email']);
+            if(Validate::validateAuth(0))
+                return Users\Profile::saveProfile($_POST['firstname'], $_POST['lastname'], $_POST['email']);
+            else
+                return ["success" => false, "message" => "Insufficient Permissions"];
+        }
+        if(isset($_REQUEST['privledges']))
+        {
+            if(Validate::validateAuth(0))
+                return Users\Profile::assignPrivledge($_POST['username'], $_POST['privledge']);
         }
     }
 }
