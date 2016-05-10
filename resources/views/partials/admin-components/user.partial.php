@@ -6,6 +6,7 @@ use Functions\Functions;
         echo Functions::displayFormMsg($message);
 ?>
 <h2>Profile: <?php echo $user['username']; ?></h2>
+<h4>Rank: <?php echo $user['title']; ?></h4>
 <?php echo Functions::genForm(  "userForm",
                                 "POST",
                                 "/admin/users?$user[username]",

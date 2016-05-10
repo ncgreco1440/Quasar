@@ -1,3 +1,6 @@
+<?php
+    use Quasar\Application\Header;
+?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -18,9 +21,11 @@
         <header>
             <nav>
                 <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="about">About</a></li>
-                    <li><a href="contact">Contact</a></li>
+                    <?php
+                        $nav = Header::getMainNavigation();
+                        foreach($nav as $key => $value)
+                            echo "<li><a href=\"$value[link]\">$value[name]</a></li>";
+                    ?>
                 </ul>
             </nav>
         </header>

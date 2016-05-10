@@ -12,7 +12,7 @@ class Profile
         if($token = Validate::validateToken())
         {
             $conn = Connection::getConnection();
-            $tablename = "LEV_users";
+            $tablename = "Q_USERS";
             $fields = Connection::mysqlClean(compact('firstname', 'lastname', 'email'));
             if(Connection::encryptAndStore(compact('tablename', 'fields', 'token')))
                 return ["success" => true, "message" => "User Profile Saved"];

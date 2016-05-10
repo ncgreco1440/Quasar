@@ -2,7 +2,7 @@
 namespace Database;
 
 use Application\Env;
-Env\Env::createEnviornment();
+Env::createEnviornment();
 /** ====================================================================================
 
     1.
@@ -19,13 +19,14 @@ class Connection
 
     public static function connect()
     {
-        $db = Env\Env::fetchEnv();
+        $db = Env::fetchEnv();
 
         self::$_connection = new \mysqli($db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD'], $db['DB_DATABASE']);
         if(self::$_connection->connect_errno > 0)
         {
             self::$_connection = new \mysqli($db['DB_HOST'], $db['DB_USERNAME'], $db['DB_PASSWORD']);
             self::install($db);
+            header("Location: /");
         }
     }
 
@@ -59,11 +60,12 @@ class Connection
      */
     public static function encryptAndStore($data)
     {
+        $env = Env::fetchEnv();
         $i = 1;
         $query = "UPDATE `$data[tablename]` SET ";
         foreach($data['fields'] as $key => $value)
         {
-            $query .= "`$key` = AES_ENCRYPT('$value', 'Grasshopper')";
+            $query .= "`$key` = AES_ENCRYPT('$value', '$env[APP_ENCRYPT_KEY]')";
             if($i != count($data['fields']))
                 $query .= ", ";
             else
@@ -71,6 +73,7 @@ class Connection
             $i++;
         }
         $query .= "WHERE `token` = '$data[token]'";
+
         if(self::executeQuery($query))
             return true;
         else
@@ -96,6 +99,8 @@ class Connection
             $query .= self::assembleQuery_SELECT_UNENCRYPTED($data['select']);
         // FROM
         $query .= self::assembleQuery_FROM($data['from']);
+        if(isset($data['join']))
+            $query .= "LEFT JOIN ".$data['join'];
         // WHERE
         if(isset($data['where']))
             if(isset($data['where']['encrypted']))
@@ -108,12 +113,25 @@ class Connection
         // LIMIT
         if(isset($data['limit']))
             $query .= self::assembleQuery_LIMIT($data['limit']);
+
+        //echo $query;
+
         $data = self::executeQuery($query);
         $data = self::fetchAssoc($data);
+
         if(count($data))
             return $data;
         else
             return [];
+    }
+
+    public static function simplySelAll($data)
+    {
+        $return = [];
+        $result = self::$_connection->query("SELECT ".$data['select']." FROM ".$data['from']."");
+        while($value = $result->fetch_assoc())
+            array_push($return, $value);
+        return $return;
     }
 
 /* =================================================================================================
@@ -129,12 +147,14 @@ class Connection
 
         // Populate Database with Tables if they are not already in the database.
         self::createUsers($db);
+        self::createUserPermissions($db);
         self::createPages($db);
         self::createPageContents($db);
 
         // Create Views
         self::createView_Navigation();
         self::createView_PageContent();
+        self::createView_Permissions();
     }
 
     private static function createDatabase($db)
@@ -172,9 +192,7 @@ class Connection
             PRIMARY KEY (`ID`))";
 
         if(!$result = self::$_connection->query($QUser))
-            echo self::$_connection->error;
-        else
-            echo "<h5>Q_Users Table Installed!</h5>";
+            die(self::$_connection->error);
 
         // Create First User
         $defaultUser = "INSERT INTO `Q_USERS` (`ID`, `username`, `email`, `password`, `token`,
@@ -188,9 +206,39 @@ class Connection
                 1,5, NOW())";
 
         if(!$result = self::$_connection->query($defaultUser))
-            echo self::$_connection->error;
-        else
-            echo "<h5>Admin User Created!</h5>";
+            die(self::$_connection->error);
+    }
+
+    private static function createUserPermissions($db)
+    {
+        $QPerms = "CREATE TABLE IF NOT EXISTS `Q_USER_PERMISSION_LVLS` (
+            `ID` int(11) NOT NULL AUTO_INCREMENT,
+            `title` varchar(55) NOT NULL DEFAULT '',
+            `description` varchar(255) NOT NULL DEFAULT '',
+            PRIMARY KEY (`ID`))";
+
+        if(!$result = self::$_connection->query($QPerms))
+            die(self::$_connection->error);
+
+        $levels =
+        [
+            "User" => "Baseline priviledges to use the site.",
+            "MVP" => "A user who has shown they are reliable and can be counted on for menial
+                moderation tasks.",
+            "Moderator" => "A graduated MVP or paid employee who moderates parts of the website.",
+            "Administrator" => "A person with full control over the creation, deletion, and content
+                of every webpage. They can also promote Users to MVP, and invite new people to the
+                admin section.",
+            "Master" => "The person with full control over the assignment of every previous role and
+                the creation, deletion, content of every webpage. Only the Master can assign
+                Administrators, and Moderators."
+        ];
+        foreach($levels as $key => $value)
+        {
+            $lvl = "INSERT INTO `Q_USER_PERMISSION_LVLS` (`title`, `description`)
+                VALUES ('$key', '$value')";
+            self::$_connection->query($lvl);
+        }
     }
 
     private static function createPageContents($db)
@@ -203,9 +251,7 @@ class Connection
             PRIMARY KEY (`ID`))";
 
         if(!$result = self::$_connection->query($QPages))
-            echo self::$_connection->error;
-        else
-            echo "<h5>Q_Pages Text Content Table Installed!</h5>";
+            die(self::$_connection->error);
 
         // Page Content Image
         $QPages = "CREATE TABLE IF NOT EXISTS `Q_PAGES_CONTENT_IMG` (
@@ -215,10 +261,7 @@ class Connection
             PRIMARY KEY (`ID`))";
 
         if(!$result = self::$_connection->query($QPages))
-            echo self::$_connection->error;
-        else
-            echo "<h5>Q_Pages Image Content Table Installed!</h5>";
-
+            die(self::$_connection->error);
     }
 
     private static function createPages($db)
@@ -230,9 +273,7 @@ class Connection
             PRIMARY KEY (`ID`))";
 
         if(!$result = self::$_connection->query($QPages))
-            echo self::$_connection->error;
-        else
-            echo "<h5>Q_Pages Table Installed!</h5>";
+            die(self::$_connection->error);
 
         // Default Page Creation
         $pages = ['Home', 'About', 'Contact'];
@@ -240,9 +281,7 @@ class Connection
         {
             $pg = "INSERT INTO `Q_PAGES` (`name`) VALUES ('$value')";
             if(!$result = self::$_connection->query($pg))
-                echo self::$_connection->error;
-            else
-                echo "<h5>$value Page Created!</h5>";
+                die(self::$_connection->error);
         }
     }
 
@@ -272,13 +311,20 @@ class Connection
         }
     }
 
+    private static function createView_Permissions()
+    {
+        $view = "CREATE VIEW permissions AS SELECT `title`, `description` FROM `Q_USER_PERMISSION_LVLS`";
+        self::$_connection->query($view);
+    }
+
     private static function assembleQuery_SELECT_ENCRYPTED($data)
     {
+        $env = Env::fetchEnv();
         $select = "";
         $i = 1;
         foreach($data['encrypted'] as $key => $value)
         {
-            $select .= "AES_DECRYPT(`$value`, 'Grasshopper') as `$value`";
+            $select .= "AES_DECRYPT(`$value`, '$env[APP_ENCRYPT_KEY]') as `$value`";
             if($i != count($data['encrypted']))
                 $select .= ", ";
             else
@@ -317,11 +363,12 @@ class Connection
 
     private static function assembleQuery_WHERE_ENCRYPTED($data)
     {
+        $env = Env::fetchEnv();
         $i = 1;
         $where = "WHERE ";
         foreach($data['encrypted'] as $key => $value)
         {
-            $where .= "AES_DECRYPT(`$key`, 'Grasshopper') = '$value'";
+            $where .= "AES_DECRYPT(`$key`, '$env[APP_ENCRYPT_KEY]') = '$value'";
             if($i != count($data['encrypted']))
                 $where .= "AND ";
             $i++;

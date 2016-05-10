@@ -5,7 +5,7 @@ use Firebase\JWT\ExpiredException;
 use Firebase\JWT\BeforeValidException;
 use Firebase\JWT\SignatureInvalidException;
 use Firebase\JWT\JWT;
-use Application\Env\Env;
+use Application\Env;
 use Database\Connection;
 use Mail\MailTo;
 
@@ -45,11 +45,12 @@ class Authenticate
     public static function logIn($username, $password, $returnPage)
     {
         $conn = Connection::getConnection();
+        $env = Env::fetchEnv();
         //Clean, Prepare, and Execute
         $cleanVals = Connection::mysqlClean(compact('username', 'password'));
-        $stmt = $conn->prepare("SELECT `userID`, AES_DECRYPT(`username`, 'Grasshopper') as
-                                `username`, `password`, `lastsignin` FROM `LEV_users` WHERE
-                                AES_DECRYPT(`username`, 'Grasshopper') = ? AND `active` = '1'
+        $stmt = $conn->prepare("SELECT `ID`, AES_DECRYPT(`username`, '$env[APP_ENCRYPT_KEY]') as
+                                `username`, `password`, `lastsignin` FROM `Q_USERS` WHERE
+                                AES_DECRYPT(`username`, '$env[APP_ENCRYPT_KEY]') = ? AND `active` = '1'
                                 LIMIT 1");
         $stmt->bind_param('s', $cleanVals['username']);
         $stmt->execute();
@@ -62,9 +63,8 @@ class Authenticate
             $stmt->fetch();
             if(self::confirmPassword($cleanVals['password'], $pass)) {
                 // Password is good, complete login
-                $lastsignin = date('c');
-                $updateLastSignIn = "UPDATE `LEV_users` SET `lastsignin` = '$lastsignin' WHERE
-                    AES_DECRYPT(`username`, 'Grasshopper') = '$cleanVals[username]' LIMIT 1";
+                $updateLastSignIn = "UPDATE `Q_USERS` SET `lastsignin` = NOW() WHERE
+                    AES_DECRYPT(`username`, '$env[APP_ENCRYPT_KEY]') = '$cleanVals[username]' LIMIT 1";
                 $conn->query($updateLastSignIn);
                 self::generateToken(compact('id', 'user'));
                 $stmt->free_result();
@@ -114,11 +114,12 @@ class Authenticate
     public static function resetPass($email)
     {
         $conn = Connection::getConnection();
+        $env = Env::fetchEnv();
         $cleanVals = Connection::mysqlClean(compact('email'));
-        $stmt = $conn->prepare("SELECT AES_DECRYPT(`username`, 'Grasshopper') as `username`,
-                                AES_DECRYPT(`email`, 'Grasshopper') as `email`
-                                FROM `LEV_users`
-                                WHERE `email` = AES_ENCRYPT(?, 'Grasshopper')
+        $stmt = $conn->prepare("SELECT AES_DECRYPT(`username`, '$env[APP_ENCRYPT_KEY]') as `username`,
+                                AES_DECRYPT(`email`, '$env[APP_ENCRYPT_KEY]') as `email`
+                                FROM `Q_USERS`
+                                WHERE `email` = AES_ENCRYPT(?, '$env[APP_ENCRYPT_KEY]')
                                 LIMIT 1");
         $stmt->bind_param('s', $cleanVals['email']);
         $stmt->execute();
@@ -153,20 +154,20 @@ class Authenticate
     public static function changePass($oldPassword, $newPassword)
     {
         $conn = Connection::getConnection();
-
+        $env = Env::fetchEnv();
         if($token = Validate::validateToken())
         {
             $cleanVals = Connection::mysqlClean(compact('oldPassword', 'newPassword'));
-            $query = "SELECT AES_DECRYPT(`username`, 'Grasshopper') as `username`,
-                            AES_DECRYPT(`email`, 'Grasshopper') as `email`, `password`
-                        FROM `LEV_users`
+            $query = "SELECT AES_DECRYPT(`username`, '$env[APP_ENCRYPT_KEY]') as `username`,
+                            AES_DECRYPT(`email`, '$env[APP_ENCRYPT_KEY]') as `email`, `password`
+                        FROM `Q_USERS`
                         WHERE `token` = '$token'";
             $user = $conn->query($query);
             $user = $user->fetch_assoc();
             if(self::confirmPassword($cleanVals['oldPassword'], $user['password']))
             {
                 $newHash = password_hash($cleanVals['newPassword'], CRYPT_BLOWFISH);
-                $updatePass = $conn->prepare("UPDATE `LEV_users` SET `password` = ?");
+                $updatePass = $conn->prepare("UPDATE `Q_USERS` SET `password` = ?");
                 $updatePass->bind_param('s', $newHash);
                 if($updatePass->execute())
                 {
@@ -219,7 +220,7 @@ class Authenticate
      */
     private static function createUniqueEntry($conn, $key)
     {
-        $query = "SELECT `token` FROM `LEV_users` WHERE `token` = '$key'";
+        $query = "SELECT `token` FROM `Q_USERS` WHERE `token` = '$key'";
         $results = $conn->query($query);
         if($results->num_rows > 0)
             return self::createUniqueEntry($conn, base64_encode(mcrypt_create_iv(32)));
@@ -253,12 +254,12 @@ class Authenticate
             'nbf' => $notBefore,                    // Timestamp of when the token should start being considered valid
             'exp' => $expire,                       // Timestamp of when the token should cease to be valid
             'data' => [                             // Optional data
-                'userID' => $user['id'],
+                'ID' => $user['id'],
                 'userName' => $user['user']
             ]
         ];
 
-        $placeToken = "UPDATE `LEV_users` SET `token` = '$tokenID' WHERE `userID` = " . $user['id'];
+        $placeToken = "UPDATE `Q_USERS` SET `token` = '$tokenID' WHERE `ID` = " . $user['id'];
         $conn->query($placeToken);
 
         $jwt = JWT::encode($data, $env['APP_TOKEN_KEY'], 'HS512');
@@ -325,9 +326,10 @@ class Authenticate
      */
     private static function setNewPass($email)
     {
+        $env = Env::fetchEnv();
         $newPassword = self::randomString(16); // reset password in database
-        $resetQuery = "UPDATE `LEV_users` SET `password` ='".password_hash($newPassword,
-            CRYPT_BLOWFISH)."'WHERE email = AES_ENCRYPT('".$email."', 'Grasshopper') LIMIT 1";
+        $resetQuery = "UPDATE `Q_USERS` SET `password` ='".password_hash($newPassword,
+            CRYPT_BLOWFISH)."'WHERE email = AES_ENCRYPT('".$email."', '$env[APP_ENCRYPT_KEY]') LIMIT 1";
         if(Connection::executeQuery($resetQuery))
             return $newPassword;
         else
@@ -376,7 +378,7 @@ class Validate
             {
                 //echo "Attempting to decode Cookie...<br/>";
                 $decoded = (array)JWT::decode($token['Token'], $env['APP_TOKEN_KEY'], array('HS512'));
-                $findTokenID = "SELECT `token` FROM `LEV_users` WHERE `token` = '$decoded[jti]'";
+                $findTokenID = "SELECT `token` FROM `Q_USERS` WHERE `token` = '$decoded[jti]'";
                 //echo $findTokenID . "<br/>";
                 $result = $conn->query($findTokenID);
                 if($result->num_rows > 0)
@@ -405,7 +407,7 @@ class Validate
         if($token = self::validateToken())
         {
             $select = ["unencrypted" => ["permissionID"]];
-            $from = "LEV_users";
+            $from = "Q_USERS";
             $where = ["token" => $token];
             $result = Connection::decryptAndShow(compact("select", "from", "where"));
             if($result['permissionID'] >= $requiedAuth)

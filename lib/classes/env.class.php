@@ -1,5 +1,5 @@
 <?php
-namespace Application\Env;
+namespace Application;
 
 class Env
 {
