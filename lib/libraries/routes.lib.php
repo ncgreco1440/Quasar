@@ -32,16 +32,16 @@ class Routes
                 header("Location: /admin/home");
             }
             case "/admin/home": {
-                return "admin_home";
+                return "adminhome";
             }
             case "/admin/pages": {
-                return "admin_pages";
+                return "adminpages";
             }
             case "/admin/users": {
-                return "admin_users";
+                return "adminusers";
             }
             case "/admin/help": {
-                return "admin_help";
+                return "adminhelp";
             }
             default: {
                 // Went to invalid route, send to home page

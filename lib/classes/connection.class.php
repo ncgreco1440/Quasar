@@ -129,6 +129,7 @@ class Connection
     {
         $return = [];
         $result = self::$_connection->query("SELECT ".$data['select']." FROM ".$data['from']."");
+
         while($value = $result->fetch_assoc())
             array_push($return, $value);
         return $return;

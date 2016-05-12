@@ -1,28 +1,5 @@
 <?php
-/** ====================================================================================
-
-    1.
-
-    The SPL __autoload() method is one of the Magic Methods supplied in PHP.
-    The __autoload method is called whenever a class is instantiated and
-    will load the classs the the first time it is called. No longer is
-    include(), require(), include_once() or require_once() needed
-    as the SPL autoload takes care of this interally.
-
-====================================================================================*/
-
-
-
-/** ====================================================================================
-
-    2.
-
-    In its simplest form, the SPL autoload class can find all class files
-    in a directory, where the class the class names, matches the file
-    name. This is great for maintaining a naming convention
-    through-out projects.
-
-====================================================================================*/
+require_once __DIR__."/vendor/autoload.php";
 
 /*** nullify any existing autoloads ***/
 spl_autoload_register(null, false);

@@ -1,0 +1,6 @@
+{
+    "require": {
+        "monolog/monolog": "1.0.*",
+        "samayo/bulletproof": "2.0.*"
+    }
+}

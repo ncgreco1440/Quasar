@@ -6,9 +6,9 @@ use Routes\Routes;
 
 $route = Routes::getRoute();
 
-$this_page = new Page;
+$calling_page = new $route;
 
-$view = $this_page->$route();
+$view = $calling_page->load();
 
 extract($view);
 extract($content);
