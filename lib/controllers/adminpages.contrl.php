@@ -4,16 +4,21 @@ use Authentication\Authenticate;
 use Authentication\Validate;
 use Quasar\Page;
 use Database\Connection;
+use Bulletproof\Image;
 
 class AdminPages extends Page
 {
+    private $ID;
+
     public function load()
     {
+        $query = Kernel::getQuery() != "" ? Kernel::getQuery() : false;
+        $this->ID = Connection::query("SELECT `ID` FROM `Q_PAGES` WHERE `name` = '$query'", true)['ID'];
         Authenticate::loggedIn();
         $message = self::analyzePost();
 
         $selectedPage = false;
-        $query = Kernel::getQuery() != "" ? Kernel::getQuery() : false;
+
         if($query)
             $selectedPage = self::getWebPage($query);
 
@@ -35,12 +40,17 @@ class AdminPages extends Page
     {
         if(isset($_REQUEST['logout']))
             Authenticate::logOut();
+        if(isset($_POST['savePage']) && isset($_FILES))
+        {
+            $this->setWebPageText($_POST);
+            $this->setWebPageImg($_FILES);
+        }
     }
 
     private function getWebPage($page)
     {
-        return ["Pagename" => $page, "Text" => $this->getWebPageText($page),
-            "Images" => $this->getWebPageImg($page)];
+        $contents = Connection::query("SELECT * FROM `Q_PAGES` WHERE `ID` = '$this->ID'", true);
+        return ["Pagename" => $page, "Contents" => $contents];
     }
 
     private function getWebPages()
@@ -58,29 +68,37 @@ class AdminPages extends Page
         return $webpages;
     }
 
-    private function getWebPageText($page)
+    private function setWebPageText($post)
     {
-        $select = "*";
-        $from = strtolower($page)."_content_txt";
-        $text = Connection::simplySelAll(compact("select", "from"));
-        $return = [];
-        foreach($text as $key => $value)
-            array_push($return, $value['paragraph']);
-        return $return;
+        Connection::query("UPDATE `Q_PAGES` SET
+            `main_text` = '$post[main_text]',
+            `sub_text_1` = '$post[sub_text_1]',
+            `sub_text_2` = '$post[sub_text_2]',
+            `sub_text_3` = '$post[sub_text_3]'
+            WHERE `ID` = $this->ID");
     }
 
-    private function setWebPageText($page)
+    private function setWebPageImg($post)
     {
+        $image = new Image($post);
+        $image->setLocation(__DIR__."/../../public/images/uploads");
+        $image->setSize(100, 1000000);
+        $image->setDimension(2000, 2000);
 
-    }
-
-    private function getWebPageImg($page)
-    {
-
-    }
-
-    private function setWebPageImg($page)
-    {
+        foreach($post as $key => $value)
+        {
+            if($image[$key])
+            {
+                $upload = $image->upload();
+                if(!$upload)
+                    echo $image["error"];
+                $basis = $image->getFullPath();
+                $imgType = strrev(substr(strrev($basis), 0, strpos(strrev($basis), ".") + 1));
+                $result = Connection::query("UPDATE `Q_PAGES` SET
+                    `$key` = "."'/images/uploads/".$image->getName().$imgType.
+                    "' WHERE `ID` = '$this->ID'");
+            }
+        }
 
     }
 }

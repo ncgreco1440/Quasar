@@ -135,6 +135,14 @@ class Connection
         return $return;
     }
 
+    public static function query($queryString, $returns = false)
+    {
+        if(!$results = self::$_connection->query($queryString))
+            echo self::$_connection->error;
+        if($returns)
+            return $results->fetch_assoc();
+    }
+
 /* =================================================================================================
         PRIVATE METHODS
 ================================================================================================= */

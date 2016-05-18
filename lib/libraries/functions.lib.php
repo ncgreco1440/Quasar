@@ -24,15 +24,15 @@ class Functions
      * @param  [mixed]   $prepopulate   [optional, will auto populate every input]
      * @return [string]                 [HTML form]
      */
-    public static function genForm($name, $method, $action, $fields, $prepopulate = false)
+    public static function genForm($name, $method, $action, $fields, $prepopulate = false, $extras = false)
     {
-        $formStr = "<form name=\"$name\" method=\"$method\" action=\"$action\">";
+        $formStr = "<form name=\"$name\" method=\"$method\" action=\"$action\" enctype=\"$extras\">";
         foreach($fields as $k => $v)
         {
             $default = "";
             if(isset($prepopulate[$k]))
                 $default = $prepopulate[$k];
-            $input = self::analyzeFormField($k, $v['type'], $default);
+            $input = self::analyzeFormField($k, $v['type'], $v['required'], $default);
             $formStr .= "<label for=\"$k\">$v[label]</label>";
             $formStr .= $input;
         }
@@ -60,15 +60,17 @@ class Functions
             </div>";
     }
 
-    private static function analyzeFormField($name, $type, $default)
+    private static function analyzeFormField($name, $type, $required, $default)
     {
         $input = "";
+        $req;
+        $required == true ? $req = "required" : $req = "";
         if($type == "text" || $type == "password" || $type == "email")
-            $input = "<input type=\"$type\" name=\"$name\" value=\"$default\" required />";
+            $input = "<input type=\"$type\" name=\"$name\" value=\"$default\" $req />";
         else if($type == "textarea")
-            $input = "<textarea name=\"$name\" required></textarea>";
+            $input = "<textarea name=\"$name\" $req>$default</textarea>";
         else
-            return $input;
+            $input = "<img src=\"$default\"/> <input type=\"file\" name=\"$name\" $req />";
         return $input;
     }
 }
